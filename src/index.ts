@@ -1,56 +1,55 @@
-import {
-    Scene,
-    Mesh,
-    MeshStandardMaterial,
-    BoxBufferGeometry,
-} from 'three';
-import { setupCamera } from './setupCamera';
-import { setupHelpers } from './setupHelpers';
-import { setupLights } from './setupLights';
-import { setupOrbitControls } from './setupOrbitControls';
-import { setupRenderer } from './setupRenderer';
+import { Scene, Mesh, MeshStandardMaterial, BoxBufferGeometry } from "three";
+import { loadModel } from "./loadModel";
+import { setupCamera } from "./setupCamera";
+import { setupHelpers } from "./setupHelpers";
+import { setupLights } from "./setupLights";
+import { setupOrbitControls } from "./setupOrbitControls";
+import { setupRenderer } from "./setupRenderer";
 
-export function setupThreeJSScene() {
+export async function setupThreeJSScene() {
+  let dimensions = { w: window.innerWidth, h: window.innerHeight };
 
-    let dimensions = { w: window.innerWidth, h: window.innerHeight };
+  const camera = setupCamera(dimensions);
 
-    const camera = setupCamera(dimensions);
+  const renderer = setupRenderer(camera, dimensions);
 
-    const renderer = setupRenderer(camera, dimensions);
+  const controls = setupOrbitControls(camera, renderer.domElement);
 
-    const controls = setupOrbitControls(camera, renderer.domElement);
+  let scene = new Scene();
 
-    let scene = new Scene();
+  setupLights(scene);
 
-    setupLights(scene);
+  setupHelpers(scene);
 
-    setupHelpers(scene);
+  //shape(s)
+  const geometry = new BoxBufferGeometry(10, 10, 10);
+  const material = new MeshStandardMaterial({
+    color: 0xff00ff,
+  });
 
-    //shape(s)
-    const geometry = new BoxBufferGeometry(10, 10, 10);
-    const material = new MeshStandardMaterial({
-        color: 0xff00ff
-    });
+  let myShape: Mesh = new Mesh(geometry, material);
+  myShape.position.y = 20;
+  scene.add(myShape);
 
-    let myShape: Mesh = new Mesh(geometry, material);
-    myShape.position.y = 20;
-    scene.add(myShape);
+  const tile = await loadModel("assets/tile.gltf");
+  if (tile) {
+    tile.scale.set(10, 10, 10);
+    scene.add(tile);
+  }
 
+  animate();
 
-    animate();
+  function animate() {
+    myShape.rotation.y += 0.01;
+    myShape.rotation.x += 0.02;
 
+    renderer.render(scene, camera);
 
-    function animate() {
-        myShape.rotation.y += 0.01;
-        myShape.rotation.x += 0.02;
+    // required if controls.enableDamping or controls.autoRotate are set to true
+    controls.update();
 
-        renderer.render(scene, camera);
-
-        // required if controls.enableDamping or controls.autoRotate are set to true
-        controls.update();
-
-        requestAnimationFrame(animate);
-    }
+    requestAnimationFrame(animate);
+  }
 }
 
 setupThreeJSScene();
